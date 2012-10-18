@@ -1,12 +1,12 @@
 ## 说明
 
-<doc>文档
+./doc 文档，协议
 
-<common> 服务端和客户端共用的库
+./common 服务端和客户端共用的库
 
-<server> 服务端
+./server 服务端
 
-<client> 客户端
+./client 客户端
 
 ## 测试步骤：
 1、修改 common\fileshare.py中的server_addr为本地IP地址
