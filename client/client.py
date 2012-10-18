@@ -135,4 +135,4 @@ def DownLoadFile(server_addr,server_port,fn):
 				s.close()
 
 if __name__ == "__main__":
-	d1 = threading.Thread(target=DownLoadFile(server_addr,server_port,'filename')).start()
+	d1 = threading.Thread(target=DownLoadFile(server_addr,server_port,'test')).start()

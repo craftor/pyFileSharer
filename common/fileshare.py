@@ -1,19 +1,19 @@
 
 # coding=utf-8
 
-__version__ = 20120427
+__version__ = 0.7
 
 import sys,os
 import socket, traceback
 
-# Server Information
-server_addr = '192.168.0.131'
+# 主机信息
+server_addr = 'localhost'
 server_port = 50000
 
-# Head Length
+# 数据包头部长度
 HEAD_LEN = 128
 
-# Buffer Size
+# 缓冲区大小
 OBUFSIZE = 1024*8
 IBUFSIZE = 1024*4
 
@@ -31,10 +31,10 @@ PT = {'UN':'Unknow Package',
 
 class fileshare(object):
 
-	def __init__(self):
+    def __init__(self):
 		pass
 
-	def int2hex(self, num, w):
+    def int2hex(self, num, w):
 		s = ''
 		for i in range(0, w, 1):
 			tmp = num%256
@@ -42,7 +42,7 @@ class fileshare(object):
 			num = num/256
 		return s
 	
-	def hex2int(self, num):
+    def hex2int(self, num):
 		result = 0
 		base = 1
 		for i in range(0, len(num), 1):
@@ -51,7 +51,7 @@ class fileshare(object):
 		return result
 
 	# 包头
-	def PkgHead(self, pt, pu):
+    def PkgHead(self, pt, pu):
 		Req  = PI                 # 包标识
 		Req += pt                 # 包类型
 		Req += self.int2hex(len(pu),1)  # 用户名长度
@@ -62,14 +62,14 @@ class fileshare(object):
 		return Req
 	
 	# 解包头
-	def UnpkHead(self, message):
+    def UnpkHead(self, message):
 		pt = message[4:6]
 		n = self.hex2int(message[6])
 		pu = message[7:7+n]
 		return pt, pu
 	
 	# 文件信息
-	def FileInfo(self, fn, fl, fo, fs):
+    def FileInfo(self, fn, fl, fo, fs):
 		
 		# 文件名
 		Req = self.int2hex(len(fn),1)
@@ -92,7 +92,7 @@ class fileshare(object):
 		return Req
 	
 	# 解文件信息
-	def UnpkFileInfo(self, message):
+    def UnpkFileInfo(self, message):
 		offset=32
 		# 文件名
 		n = self.hex2int(message[offset])
@@ -106,12 +106,12 @@ class fileshare(object):
 		return fn,fl,fo,fs
 	
 	# 读文件
-	def ReadFile(self, fi, fo, fs):
+    def ReadFile(self, fi, fo, fs):
 		fi.seek(fo)
 		return fi.read(fs)
 	
 	# 写文件
-	def WriteFile(self, message, fi, fo, fs):
+    def WriteFile(self, message, fi, fo, fs):
 		try:
 			WriteData = message[0:fs]
 		except:
@@ -128,16 +128,16 @@ class fileshare(object):
 				return True
 	
 	# 文件请求包头
-	def FRP(self, pt, pu, fn, fl, fo, fs):
+    def FRP(self, pt, pu, fn, fl, fo, fs):
 		return self.PkgHead(pt,pu)+ self.FileInfo(fn,fl,fo,fs)
 
 	# 带数据的文件包头
-	def FDP(self, pt, pu, fn, fl, fo, fs, fi):
+    def FDP(self, pt, pu, fn, fl, fo, fs, fi):
 		Req = self.LoadFileData(fi,fo,fs)
 		return self.FRP(pt,pu,fn,fl,fo,fs) + Req
-
+	
 	# 扫描文件，并打开
-	def ScanFile(self,path,fn):
+    def ScanFile(self,path,fn):
 		fi = ''
 		fl = 0
 		for filelist in os.listdir(path):
@@ -153,7 +153,7 @@ class fileshare(object):
 		return fi, fl
 	
 	# 检查文件是否存在
-	def FileExisted(self,path,fn):
+    def FileExisted(self,path,fn):
 		Existed = False
 		for filelist in os.listdir(path):
 			if fn == filelist :
@@ -161,7 +161,7 @@ class fileshare(object):
 		return Existed
 	
 	# 打印包头信息
-	def PrintFRP(self,pt,pu,fn,fl,fo,fs):
+    def PrintFRP(self,pt,pu,fn,fl,fo,fs):
 		print "----------------------------------"
 		print " Craftor's File Sharing  package  "
 		print "----------------------------------"

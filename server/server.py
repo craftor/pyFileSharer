@@ -6,98 +6,17 @@ import socket, traceback
 import threading
 import SocketServer
 
+from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, \
+                        FileTransferSpeed, FormatLabel, Percentage, \
+                        ProgressBar, ReverseBar, RotatingMarker, \
+                        SimpleProgress, Timer
+
 sys.path.append('../common')
 from fileshare import *
 
-server_ip = '192.168.0.131'
-server_port = 50000
-conn_list = []
-file_dir = './file'
+mySer = fileshare()
 
-class FileServer(threading.Thread):
-	
-	def __init__(self, fd):
-		threading.Thread.__init__(self)
-		self.fd = fd
-		self.fs = fileshare()
-	
-	def process(self):
-		
-		Req = ''
-		
-		# 文件查询
-		if self.pt=='FQ':
-			
-			# 在file目录下查找文件
-			if (self.fs.FileExisted(file_dir,fn)):
-				Req = self.fs.FRP('FE',self.pu,self.fn,self.fl,0,0)
-			else:
-				Req = self.fs.FRP('FN',self.pu,self.fn,self.fl,0,0)
-		
-		# 文件传输请求
-		elif self.pt=='FR':
-			
-			# 扫描文件
-			self.fi,self.fl = self.fs.ScanFile(file_dir,self.fn)
-			
-			if (self.fl):
-				# 文件协议包头
-				Req = self.fs.FRP('FD',self.pu,self.fn,self.fl,self.fo,self.fs)
-				# 文件数据
-				Req += self.fs.ReadFile(self.fi,self.fo,self.fs)
-			else:
-				Req = self.fs.FRP('FN',self.pu,self.fn,self.fl,0,0)
-		
-		# 发送协议包
-		try:
-			self.fd.sendall(Req)
-		except:
-			print "Error 2"
-			raise
-	
-	def run(self):
-		message = ''
-		try:
-			while (len(message)<HEAD_LEN):
-				message = self.fd.recv(HEAD_LEN-len(message))
-		except:
-			print 'Error 1'
-			raise
-		else:
-			# 检测协议包
-			self.pt, self.pu = self.fs.UnpkHead(message)
-			self.fn, self.fl, self.fo, self.fs = self.fs.UnpkFileInfo(message)
-			# 处理
-			self.process()
-
-def server_listen():
-	global conn_list
-	listen_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	listen_fd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	listen_fd.bind((server_ip, server_port))
-	listen_fd.listen(1024)
-	conn_lock = threading.Lock()
-	print "File Server is listening on ", server_ip + ":" + str(server_port)
-
-	while True:
-		conn_fd, remote_addr = listen_fd.accept()
-		print "connection from ", remote_addr, "conn_list", len(conn_list)
-		conn = FileServer(conn_fd)
-		conn.start()
-		conn_lock.acquire()
-		conn_list.append(conn)
-		# check timeout
-		try:
-			curr_time = time.time()
-			for conn in conn_list:
-				if int(curr_time - conn.alive_time) > conn_timeout:
-					if conn.running == True:
-						conn.fd.shutdown(socket.SHUT_RDWR)
-					conn.running = False
-			conn_list = [conn for conn in conn_list if conn.running]
-		except:
-			print sys.exc_info()
-		conn_lock.release()
+print "Listening on " , server_addr, server_port
 
 class MyServer(SocketServer.BaseRequestHandler):
 	'''
@@ -204,8 +123,6 @@ class MyServer(SocketServer.BaseRequestHandler):
 					raise
 
 
-def main():
-    server_listen()
-
 if __name__ == "__main__":
-	main()
+	s1 = SocketServer.TCPServer((server_addr,server_port), MyServer)
+	s1.serve_forever()

@@ -14,12 +14,16 @@
 
 ## 测试步骤：
 
-1、修改 common\fileshare.py中的server_addr为本地IP地址
+1. 安装tools目录下的setuptools和processbar
+	1）运行setuptools.exe
+	2）解压processbar，运行setup.py install
 
-2、运行 server\server.py
+2. 修改 common\fileshare.py中的server_addr为本地IP地址
 
-3、在   server\file 中放入待测试传输的文件
+3. 运行 server\server.py
 
-4、修改 client\client.py中的最后一行文件名为第3步中的文件名
+4. 在 server\file 中放入待测试传输的文件
 
-5、运行 client.py
+5. 修改 client\client.py中的最后一行文件名为第3步中的文件名
+
+6. 运行 client.py
