@@ -6,14 +6,11 @@ __version__ = 0.7
 import sys,os
 import socket, traceback
 
-# 主机信息
 server_addr = 'localhost'
 server_port = 50000
 
-# 数据包头部长度
 HEAD_LEN = 128
 
-# 缓冲区大小
 OBUFSIZE = 1024*8
 IBUFSIZE = 1024*4
 
@@ -22,11 +19,11 @@ PT = {'UN':'Unknow Package',
 	  'RR':'Register Requrest ',
       'RS':'Register Success ',
 	  'SC':'Status Check ',
-	  'FQ':'File Query',       # 客户端向服务器查询文件
-	  'FE':'File Existed',     # 服务器端文件存在
-	  'FN':'File Not Existed', # 服务器端文件不存在
-	  'FT':'File Transmit',    # 客户端请求文件传输
-	  'FD':'File Data',        # 服务器返回文件数据
+	  'FQ':'File Query',       
+	  'FE':'File Existed',     
+	  'FN':'File Not Existed', 
+	  'FT':'File Transmit',    
+	  'FD':'File Data',        
 	  'FF':'File Finish'}
 
 class fileshare(object):
@@ -50,67 +47,57 @@ class fileshare(object):
 			base *= 256
 		return result
 
-	# 包头
     def PkgHead(self, pt, pu):
-		Req  = PI                 # 包标识
-		Req += pt                 # 包类型
-		Req += self.int2hex(len(pu),1)  # 用户名长度
-		Req += pu                       # 用户名
+		Req  = PI                 # Package Identifier
+		Req += pt                 # Package Type
+		Req += self.int2hex(len(pu),1)  # Length of user name
+		Req += pu                       # User name
 		for i in range(0, 15-len(pu), 1):
 			Req += '\x00'
-		Req += self.int2hex(0,10) #保留
+		Req += self.int2hex(0,10) # Reserved
 		return Req
 	
-	# 解包头
     def UnpkHead(self, message):
 		pt = message[4:6]
 		n = self.hex2int(message[6])
 		pu = message[7:7+n]
 		return pt, pu
 	
-	# 文件信息
     def FileInfo(self, fn, fl, fo, fs):
 		
-		# 文件名
+		# File Name
 		Req = self.int2hex(len(fn),1)
 		Req += fn
 		for i in range(0,63-len(fn),1):
 			Req += '\x00'
 
-		# 文件长度
+		# File Length
 		Req += self.int2hex(fl,8)
 
-		# 请求偏移
+		# File Offset
 		Req += self.int2hex(fo,8)
 
-		# 请求长度
+		# request Size
 		Req += self.int2hex(fs, 8)
 
-		# 保留
+		# Reserved
 		Req += self.int2hex(0,8)
 
 		return Req
 	
-	# 解文件信息
     def UnpkFileInfo(self, message):
 		offset=32
-		# 文件名
 		n = self.hex2int(message[offset])
 		fn = message[offset+1:offset+1+n]
-		# 文件长度
 		fl = self.hex2int(message[offset+64:offset+72])
-		# 请求偏移
 		fo = self.hex2int(message[offset+72:offset+80])
-		# 请求长度
 		fs = self.hex2int(message[offset+80:offset+88])
 		return fn,fl,fo,fs
 	
-	# 读文件
     def ReadFile(self, fi, fo, fs):
 		fi.seek(fo)
 		return fi.read(fs)
 	
-	# 写文件
     def WriteFile(self, message, fi, fo, fs):
 		try:
 			WriteData = message[0:fs]
@@ -127,16 +114,15 @@ class fileshare(object):
 			else:
 				return True
 	
-	# 文件请求包头
+	# File Request Package
     def FRP(self, pt, pu, fn, fl, fo, fs):
 		return self.PkgHead(pt,pu)+ self.FileInfo(fn,fl,fo,fs)
 
-	# 带数据的文件包头
+	# File Data Package
     def FDP(self, pt, pu, fn, fl, fo, fs, fi):
 		Req = self.LoadFileData(fi,fo,fs)
 		return self.FRP(pt,pu,fn,fl,fo,fs) + Req
 	
-	# 扫描文件，并打开
     def ScanFile(self,path,fn):
 		fi = ''
 		fl = 0
@@ -152,7 +138,6 @@ class fileshare(object):
 					fl = os.path.getsize(fnn)
 		return fi, fl
 	
-	# 检查文件是否存在
     def FileExisted(self,path,fn):
 		Existed = False
 		for filelist in os.listdir(path):
@@ -160,7 +145,6 @@ class fileshare(object):
 				Existed = True
 		return Existed
 	
-	# 打印包头信息
     def PrintFRP(self,pt,pu,fn,fl,fo,fs):
 		print "----------------------------------"
 		print " Craftor's File Sharing  package  "

@@ -1,26 +1,25 @@
 
 [20120427]
-修改协议包头格式，现在为128字节，详见doc下文档
+Change the protocol format, see package.txt.
 
 [20120426]
-修改数据流读取方式，解决服务器与客户端速率不匹配时文件数据丢失的情况。
+Change the type of reading data stream
 
 [20120424]
-修改文件读取方式，可以发送任何大小的文件。
+Change file read type, read a slice instead of full file each time.
 
 [20120423]
-修改数据包格式为 <协议包头>+<文件数据>，减少数据冗余。
-本地传输最高可达40MB/s
+Change Data Package definition
 
 [20120420]
-修改连接方式为TCP连接
+Use TCP only, delete UDP.
 
 [20120417]
-将服务器端和客户端的代码改成线程
-调整了协议包中的文件信息定义
+1. Use threading on Sever and Client
+2. Change the file request head definition, see package.txt
 
 [20120416]
-客户端向服务器请求任意文件，能正确接收。
+Client request any file, can receive successfully.
 
 [20120413]
-完成了客户端向服务器注册，服务器返回注册成功信息。
+Complete client register on server, server reply success information.

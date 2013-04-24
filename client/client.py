@@ -16,7 +16,7 @@ from fileshare import *
 
 def DownLoadFile(server_addr,server_port,fn):
 	
-	# 记下起始时间
+	# Mark the start time
 	startime=time.time()
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,51 +25,51 @@ def DownLoadFile(server_addr,server_port,fn):
 	try:
 		s.connect((server_addr, server_port))
 	except:
-		print "1服务器无法连接"
+		print "Connecting to the server failed."
 		sys.exit()
 	else:
-		print "1服务器连接成功"
+		print "Connecting to the server success."
 		Req = myclient.FRP('FR','Craftor',fn,0,0,0)
 		try:
 			s.sendall(Req)
 		except:
-			print "1文件请求失败"
+			print "File Request failed."
 			s.close()
 			sys.exit()
 
 	try:
-		# 确保收到完整的协议包头
+		# Make Sure get the full protocol head
 		message = s.recv(HEAD_LEN)
 		while (len(message)<HEAD_LEN):
 			message += s.recv(HEAD_LEN-len(message))
 	except:
-		print "1服务器未响应"
+		print "Failed to get full protocol head"
 		s.close()
 		sys.exit()
 	
-	# 检测协议包
+	# Check the Protocol Head
 	pt,pu = myclient.UnpkHead(message)
 
-	# 文件是否存在
+	# File Exist
 	if (pt=='FE'):
 		fn,fl,fo,fs = myclient.UnpkFileInfo(message)
-		# 创建文件句柄
+		# Handle the file
 		fi = open('./file/'+fn,'wb')
 		FileExisted = True
-		print "2文件已找到"
+		print "File found."
 	elif (pt=='FN'):
 		FileExisted = False
-		print "2文件不存在"
+		print "File not found."
 		s.close()
 		sys.exit()
 	else:
 		FileExisted = False
-		print "2未知的响应"
+		print "No reponse"
 		s.close()
 		sys.exit()
 	
-	# 进度条
-	print "3下载开始"
+	# Process Bar
+	print "Downloading..."
 	pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=fl).start()
 
 	if (FileExisted):
@@ -79,19 +79,19 @@ def DownLoadFile(server_addr,server_port,fn):
 		while (FileOK==False):
 
 			try:
-				# 确保正确收到完整的协议包头
+				# Get full protocol head
 				message = s.recv(HEAD_LEN)
 				while (len(message)<HEAD_LEN):
 					message += s.recv(HEAD_LEN-len(message))
 			except:
-				print "4服务器未响应"
+				print "Failed to get full protocol head"
 				s.close()
 				sys.exit()
 			
-			# 检测协议包
+			# Check the head
 			pt,pu = myclient.UnpkHead(message)
 
-			# 文件数据
+			# File Data
 			if (pt=='FD'):
 				
 				fn,fl,fo,fs = myclient.UnpkFileInfo(message)
@@ -99,8 +99,7 @@ def DownLoadFile(server_addr,server_port,fn):
 				offset = fo
 				writesize = 0
 				
-				# 写入文件的偏移fo和长度fs，都是由服务器端给出的
-				# 可能是一个完整的文件，也可能是文件片段
+				# fo,fs are get from Sever, maybe full or part of a file
 				while (offset<fs):
 
 					if (offset+IBUFSIZE)>fs:
@@ -110,25 +109,25 @@ def DownLoadFile(server_addr,server_port,fn):
 					
 					try:
 						message = s.recv(writesize)
-						# 写入真实获取到的文件数据长度
+						# Write data
 						myclient.WriteFile(message,fi,offset,len(message))
 						pbar.update(offset)
 						offset += len(message)
 					except:
-						print "5接收数据失败"
+						print "Failed on receiving file."
 						fi.close()
 						sys.exit()
 				
-			# 文件结束
+			# File Finish
 			elif (pt=='FF'):
 				pbar.finish()
 				endtime = time.time()
 				timeuse = endtime - startime
 				print "------------------------------------------"
-				print " %s 接收完成." % fn
-				print " 文件大小 : %6.2f MB" % (fl/1024/1024)
-				print " 下载用时 : %6.2f s" % timeuse
-				print " 下载速度 : %6.2f MB/s" % (fl/1024/1024/timeuse)
+				print " %s Downloading Finished." % fn
+				print " File Size : %6.2f MB" % (fl/1024/1024)
+				print " Time Use  : %6.2f s" % timeuse
+				print " Speed     : %6.2f MB/s" % (fl/1024/1024/timeuse)
 				print "------------------------------------------"
 				FileOK = True
 				fi.close()

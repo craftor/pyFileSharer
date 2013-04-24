@@ -26,99 +26,99 @@ class MyServer(SocketServer.BaseRequestHandler):
 
 		self.data = self.request.recv(HEAD_LEN).strip()
 
-		# 检测协议包
+		# Check the Package Head
 		pt,pu = mySer.UnpkHead(self.data)
 
-		# 注册请求(Register Requtest)
+		# (Registering Requtest)
 		if (pt == 'RR'):
 			#mySer.PrintDRP(pt,pl,dv,da,dp,du)
 			Req = mySer.DRP('RS',pl,dv,da,dp,du)
 			try:
 				self.request.sendall(Req)
 			except:
-				print "1客户端未响应"
+				print "Client no response"
 				self.request.close()
 				raise
 		
-		# 文件请求(File Request)
+		# (File Request)
 		elif (pt == 'FR'):
 
 			offset = 0
 
 			fn,fl,fo,fs = mySer.UnpkFileInfo(self.data)
 
-			# 在file目录下查找文件
+			# Lookup for the file
 			fi,fl = mySer.ScanFile('./file',fn)
 			
 			if (fl):
 
-				# 告诉客户端文件存在
+				# File Exist
 				Req = mySer.FRP('FE',pu,fn,fl,0,0)
 				try:
 					self.request.sendall(Req)
 				except:
-					print "2客户端未响应"
+					print "Client no response"
 					self.request.close()
 					raise
 
-				# 进度条
-				print "3文件传输开始"
+				# Process Bar
+				print "File Transfer Starting..."
 				pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=fl).start()
 
-				# 文件数据头部
+				# File Data
 				Req = mySer.FRP('FD',pu,fn,fl,0,fl)
 				try:
 					self.request.sendall(Req)
 				except:
-					print "2客户端未响应"
+					print "Client no response"
 					self.request.close()
 					raise
 
-				# 文件数据
+				# File data
 				while (offset < fl):
 
-					# 文件偏移判断
+					# File offset
 					if (offset+OBUFSIZE) > fl:
 						Req = mySer.ReadFile(fi,offset,fl-offset)
 					else:
 						Req = mySer.ReadFile(fi,offset,OBUFSIZE)
 						
-					# 发送
+					# Send file data
 					try:
 						self.request.sendall(Req)
 					except:
-						print "4客户端未响应"
+						print "Client no response"
 						print offset
 						self.request.close()
 						raise	
 
-					# 进度条控制
+					# Process Bar Control
 					pbar.update(offset)
 
-					# 文件偏移++
+					# File Offset ++
 					offset += OBUFSIZE
 				
-				# 告诉客户端文件结束
+				# File Finished
 				Req = mySer.FRP('FF',pu,fn,fl,0,0)
 				try:
 					self.request.sendall(Req)
 				except:
-					print "2客户端未响应"
+					print "Client no response"
 					self.request.close()
 					raise
 
 				pbar.finish()
 				fi.close()
-				print '6文件传输完成'
+				print 'File transfer finished.'
 				
 			else:
 
-				# 告诉客户端文件不存在
+				# File Not exist
 				Req = mySer.FRP('FN',pu,fn,fl,offset,0)
 				try:
 					self.request.sendall(Req)
 				except:
-					print "客户端未响应"
+					print "Client no response"
 					self.request.close()
 					raise
 
